@@ -35,7 +35,7 @@ class Proxy
     verb    = request_line[/^\w+/]
     url     = request_line[/^\w+\s+(\S+)/, 1]
     version = request_line[/HTTP\/(1\.\d)\s*$/, 1]
-    uri     = URI::parse url
+    uri     = URI::parse url    
 
     if !@file.nil? 
       @file.puts((" %4s "%verb) + url)
@@ -61,11 +61,19 @@ class Proxy
         to_server.write("Connection: close\r\n\r\n")
         
         if content_len >= 0
-          to_server.write(to_client.read(content_len))
+          content = to_client.read(content_len)
+          if verb == "POST" 
+              if !@file.nil?
+                  @file.puts(content.to_s)
+                else
+                  puts(content.to_s.red)
+                end
+            end          
+          to_server.write(content)
         end
         
         break
-      else
+      else        
         to_server.write(line)
       end
     end
@@ -73,7 +81,7 @@ class Proxy
     buff = ""
     loop do
       to_server.read(4096, buff)
-      to_client.write(buff)
+      to_client.write(buff)      
       break if buff.size >= 4096
     end    
     
